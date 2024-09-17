@@ -1,0 +1,10 @@
+[submodule "extern/ImGuiInclude/imgui"]
+	path = extern/ImGuiInclude/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking
+[submodule "extern/ImGuiInclude/implot"]
+	path = extern/ImGuiInclude/implot
+	url = https://github.com/epezent/implot.git
+[submodule "extern/ImGuiInclude/ImFileDialog"]
+	path = extern/ImGuiInclude/ImFileDialog
+	url = https://github.com/dfranx/ImFileDialog.git
