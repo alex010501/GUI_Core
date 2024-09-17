@@ -23,18 +23,14 @@ add_library(imguiInclude STATIC ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imconfig.h
                                 ${CMAKE_CURRENT_SOURCE_DIR}/implot/implot.cpp
                                 ${CMAKE_CURRENT_SOURCE_DIR}/implot/implot_internal.h
                                 ${CMAKE_CURRENT_SOURCE_DIR}/implot/implot_items.cpp
-                                # ${CMAKE_CURRENT_SOURCE_DIR}/ImFileDialog/ImFileDialog.h
-                                # ${CMAKE_CURRENT_SOURCE_DIR}/imFileDialog/ImFileDialog.cpp
                                 ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_glfw.h
                                 ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_glfw.cpp
-                                ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_vulkan.h
-                                ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_vulkan.cpp)
+                                ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_opengl3.h
+                                ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_opengl3.cpp)
 
 target_link_libraries(imguiInclude PRIVATE glfw)
-target_link_libraries(imguiInclude PRIVATE Vulkan::Vulkan)
-target_link_libraries(imguiInclude PRIVATE GLEW::GLEW)
+# target_link_libraries(imguiInclude PRIVATE OpenGL::GL)
 target_include_directories(imguiInclude PRIVATE ${Stb_INCLUDE_DIR})
 
 target_include_directories(imguiInclude PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/imgui
-                                               ${CMAKE_CURRENT_SOURCE_DIR}/implot
-                                               ${CMAKE_CURRENT_SOURCE_DIR}/ImFileDialog)
+                                               ${CMAKE_CURRENT_SOURCE_DIR}/implot)

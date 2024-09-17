@@ -8,8 +8,12 @@ CoreWindow::CoreWindow(const char *p_title,
     
 }
 
-int CoreWindow::initGLFW()
+int CoreWindow::run(const char* scenePath)
 {
+    // Connect app with GUI windows
+    this->initSignals();
+
+    // Initialise GLFW
     if (!glfwInit())
     {
         // Handle initialization error
@@ -54,83 +58,6 @@ int CoreWindow::initGLFW()
     glfwSwapInterval(1); // Enable vsync
     this->setCallbacks();
 
-    return 0;
-}
-
-int CoreWindow::run(const char* scenePath)
-{
-
-    /*
-    // Initialize GLFW
-    if (!glfwInit())
-    {
-        return -1;
-    }
-
-    // Create a GLFW window
-    GLFWwindow* window = glfwCreateWindow(800, 600, "VSG with GLFW", nullptr, nullptr);
-    if (!window)
-    {
-        glfwTerminate();
-        return -1;
-    }
-
-    glfwMakeContextCurrent(window);
-
-    // Set GLFW callbacks
-    glfwSetCursorPosCallback(window, cursor_position_callback);
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
-
-    // Initialize VSG
-    auto options = vsg::Options::create();
-    auto viewer = vsg::Viewer::create();
-    auto windowTraits = vsg::WindowTraits::create();
-    windowTraits->window = window;
-    auto vsgWindow = vsg::Window::create(windowTraits);
-    viewer->addWindow(vsgWindow);
-
-    // Create a scene graph with a floor
-    auto scene = vsg::Group::create();
-    auto floor = vsg::createBox(vsg::vec3(0.0f, 0.0f, -0.5f), vsg::vec3(10.0f, 10.0f, 1.0f));
-    scene->addChild(floor);
-
-    // Set the background color
-    viewer->clearColor() = vsg::vec4(0.2f, 0.3f, 0.3f, 1.0f);
-
-    // Set up the camera
-    auto camera = vsg::Camera::create();
-    camera->setViewMatrix(vsg::lookAt(vsg::vec3(0.0f, -10.0f, 10.0f), vsg::vec3(0.0f, 0.0f, 0.0f), vsg::vec3(0.0f, 0.0f, 1.0f)));
-    camera->setProjectionMatrix(vsg::perspective(45.0f, 800.0f / 600.0f, 0.1f, 100.0f));
-    viewer->addCamera(camera);
-
-    // Main loop
-    while (!glfwWindowShouldClose(window))
-    {
-        glfwPollEvents();
-        viewer->advanceToNextFrame();
-        viewer->handleEvents();
-        viewer->update();
-        viewer->recordAndSubmit();
-        viewer->present();
-    }
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
-*/
-
-
-
-
-    // Connect app with GUI windows
-    this->initSignals();
-
-    // Initialise GLFW
-    int lv_init = this->initGLFW();
-    if (!lv_init)
-    {
-        return lv_init;
-    }
-
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -139,40 +66,13 @@ int CoreWindow::run(const char* scenePath)
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
     ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForVulkan(this->m_window, true);
-
-    ImGui_ImplVulkan_InitInfo init_info = {};
-	init_info.Instance = _instance;
-	init_info.PhysicalDevice = _chosenGPU;
-	init_info.Device = _device;
-	init_info.Queue = _graphicsQueue;
-	init_info.DescriptorPool = imguiPool;
-	init_info.MinImageCount = 3;
-	init_info.ImageCount = 3;
-	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-
-	ImGui_ImplVulkan_Init(&init_info, _renderPass);
+    ImGui_ImplGlfw_InitForOpenGL(this->m_window, true);
+    ImGui_ImplOpenGL3_Init("#version 460 core");
 
     for (auto lv_GUI_windows: this->m_GUIWindows)
         lv_GUI_windows->setupFileDialog();
 
-    // Initialize VSG
-    auto options = vsg::Options::create();
-    auto viewer = vsg::Viewer::create();
-    auto windowTraits = vsg::WindowTraits::create();
-
-    auto vulkanSurface = 
-
-    vsg::ref_ptr<vsg::Context> context = vsg::Context::create();
-    this->m_viewer.addWindow(context);
-
-    windowTraits->windowClass(this->m_window);
-    auto vsgWindow = vsg::Window::create(windowTraits);
-    viewer->addWindow(vsgWindow);
-
     // Initialize OSG viewer
-    auto windowTraits = vsg::WindowTraits::create();
-    windowTraits->windowClass;
     osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
     traits->readDISPLAY();
     traits->setUndefinedScreenDetailsToDefaultScreen();
@@ -189,7 +89,6 @@ int CoreWindow::run(const char* scenePath)
     this->loadScene(scenePath);
 
     // set up viewer
-    this->m_viewer.ca
     this->m_viewer.getCamera()->setClearColor(this->m_clearColor);
     this->m_viewer.setSceneData(this->m_scene.getSceneRoot());
     
@@ -430,7 +329,7 @@ GUI_Helper::ImageData GUI_Helper::LoadImg(const char* filename)
 bool GUI_Helper::ImGui_imageButton(GUI_Helper::ImageData imageData, bool enabled)
 {   
     ImGui::BeginDisabled(!enabled);
-    bool ret = ImGui::IsItemClicked(ImGui::ImageButton(imageData.texture, ImVec2(imageData.width, imageData.height)));
+    bool ret = ImGui::IsItemClicked(ImGui::ImageButton("Button", imageData.texture, ImVec2(imageData.width, imageData.height)));
     ImGui::EndDisabled();
     return ret;
 }

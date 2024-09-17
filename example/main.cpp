@@ -3,7 +3,8 @@
 
 int main()
 {
-    print_paths();
+    // print_paths();
+    std::cout << "hello" << std::endl;
     getchar();
     return 0;
 }

@@ -16,14 +16,12 @@
 #include <chrono>
 
 #include <UI/UIWindow.h>
-// #include <3D/BaseScene.h>
+#include <3D/BaseScene.h>
 #include <sigslot.h>
 #include <timer.h>
 
 #include <stb_image.h>
 #include <GLFW/glfw3.h>
-#include <backends/imgui_impl_glfw.h>
-#include <backends/imgui_impl_vulkan.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 
@@ -34,35 +32,25 @@
 #include <osgDB/ReadFile>
 #include <osgGA/TrackballManipulator>
 
-#include <vsg/all.h>
-
-#include "config.h"
-
-class CustomTrackballManipulator : public vsg::Trackball
+class CustomTrackballManipulator : public osgGA::TrackballManipulator
 {
 public:
-    void panTrackball(double dx, double dy, double scale)
+    void pan(double dx, double dy, double scale)
     {
-        vsg::t_vec2<double> delta(dx * scale, dy * scale);
-        pan(delta);
-        // panModel(-dx * scale, dy * scale);
+        panModel(-dx * scale, dy * scale);
     }
 
-    void rotateTrackball(float dx, float dy, double scale)
+    void rotate(float dx, float dy, double scale)
     {
-        vsg::dvec3 axisZ(0.0, 0.0, 1.0);
-        vsg::dvec3 axisY(1.0, 0.0, 0.0);
-        rotate(dx, axisZ);
-        rotate(dy, axisY);
-        // rotateTrackball(0.0, 0.0, -dx, dy, scale);
+        rotateTrackball(0.0, 0.0, -dx, dy, scale);
     }
 };
 
 class CoreWindow: public sigslot::has_slots<>
 {
 private:
-    vsg::Viewer m_viewer;
-    vsg::ref_ptr<CustomTrackballManipulator> m_manipulator;
+    osgViewer::Viewer m_viewer;
+    osg::ref_ptr<CustomTrackballManipulator> m_manipulator;
     Timer m_fpsTimer;
     GLFWwindow* m_window;
     GLFWimage* m_icon;
@@ -78,16 +66,13 @@ private:
     double lastY = 0;
 protected:
     std::vector<UIWindow*> m_GUIWindows;
-    // BaseScene m_scene;
-    vsg::vec4 m_clearColor = vsg::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    BaseScene m_scene;
+    osg::Vec4 m_clearColor = osg::Vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
     bool isOpen()
     {
         return !glfwWindowShouldClose(m_window);
     }
-
-
-    int initGLFW();
 
     void draw();
 
@@ -118,4 +103,23 @@ public:
     CoreWindow(const char* p_title, const char* p_iconPath = nullptr, int p_width = 1280, int p_height = 720);
 
     int run(const char* scenePath = nullptr);
+};
+
+
+namespace GUI_Helper
+{
+    struct ImageData
+    {
+        ImTextureID texture;
+        int width;
+        int height;
+    };
+    
+    bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height);
+
+    ImageData LoadImg(const char* filename);
+
+    bool ImGui_imageButton(ImageData imageData, bool enabled);
+
+    void ImGui_picture(ImageData imageData);
 };

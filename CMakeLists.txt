@@ -21,22 +21,24 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib/${CMAKE_BUILD_TYPE})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib/${CMAKE_BUILD_TYPE})
 
 # External libraries
-find_package(glfw3 CONFIG REQUIRED)
+
+# Bullet - physics library
 find_package(Bullet CONFIG REQUIRED)
 
+# GLFW, stb, tinyfiledialogs, iniparser
+find_package(glfw3 CONFIG REQUIRED)
 find_package(stb REQUIRED)
 find_package(tinyfiledialogs CONFIG REQUIRED)
 find_package(unofficial-iniparser CONFIG REQUIRED)
+
+# OpenSceneGraph + OpenGL
+set(OpenGL_GL_PREFERENCE GLVND)
+find_package(OpenGL REQUIRED)
+include_directories(${OPENGL_INCLUDE_DIRS})
+# find_package(GLEW REQUIRED)
+# set(osg_OPENGL_PROFILE GL3)
+find_package(OpenSceneGraph REQUIRED COMPONENTS osg osgViewer osgDB osgGA osgUtil)
 find_package(assimp CONFIG REQUIRED)
-
-find_package(Vulkan REQUIRED)
-find_package(vsg CONFIG REQUIRED)
-find_package(vsgXchange CONFIG REQUIRED)
-
-find_package(OpenGL REQUIRED COMPONENTS OpenGL)
-find_package(GLEW REQUIRED)
-set(osg_OPENGL_PROFILE GL3)
-find_package(OpenSceneGraph REQUIRED COMPONENTS osg osgViewer osgDB osgGA osgUtil) 
 
 # ImGui
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extern/ImGuiInclude)
@@ -60,28 +62,27 @@ file(GLOB_RECURSE GUI_Sources CONFIGURE_DEPENDS "include/*.h"
 add_library(GUI_Core STATIC ${GUI_Sources})
 
 # Link and include external libraries
-target_link_libraries(GUI_Core PRIVATE glfw)
 target_link_libraries(GUI_Core PRIVATE ${BULLET_LIBRARIES})
-target_link_libraries(GUI_Core PRIVATE vsg::vsg)
-target_link_libraries(GUI_Core PRIVATE vsgXchange::vsgXchange)
-target_link_libraries(GUI_Core PRIVATE tinyfiledialogs::tinyfiledialogs)
-target_link_libraries(GUI_Core PRIVATE OpenGL::GL)
-target_link_libraries(GUI_Core PRIVATE GLEW::GLEW)
-target_include_directories(GUI_Core PRIVATE ${Stb_INCLUDE_DIR})
+target_include_directories(GUI_Core PRIVATE ${BULLET_INCLUDE_DIRS})
 
+target_link_libraries(GUI_Core PRIVATE glfw)
+target_include_directories(GUI_Core PRIVATE ${Stb_INCLUDE_DIR})
+target_link_libraries(GUI_Core PRIVATE tinyfiledialogs::tinyfiledialogs)
 target_link_libraries(GUI_Core PRIVATE unofficial::iniparser::iniparser)
 
-target_link_libraries(GUI_Core PRIVATE assimp::assimp)
-
+# target_link_libraries(GUI_Core PRIVATE OpenGL::GL)
+# target_link_libraries(GUI_Core PRIVATE GLEW::GLEW)
 target_link_libraries(GUI_Core PRIVATE ${OPENSCENEGRAPH_LIBRARIES})
 target_include_directories(GUI_Core PUBLIC ${OPENSCENEGRAPH_INCLUDE_DIRS})
-
-target_link_libraries(GUI_Core PUBLIC EventHandler)
-target_include_directories(GUI_Core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/extern/EventHandler/include)
+target_link_libraries(GUI_Core PRIVATE assimp::assimp)
 
 # Link ImGui
 target_link_libraries(GUI_Core PUBLIC imguiInclude)
 target_include_directories(GUI_Core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/extern/ImGuiInclude)
+
+# Link EventHandler
+target_link_libraries(GUI_Core PUBLIC EventHandler)
+target_include_directories(GUI_Core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/extern/EventHandler/include)
 
 # Example
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/example)
