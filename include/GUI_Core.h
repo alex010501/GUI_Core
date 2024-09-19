@@ -10,21 +10,22 @@
 #define GLFW_EXPOSE_NATIVE_COCOA
 #endif
 
+
+// Systen include
 #include <iostream>
 #include <vector>
 #include <thread>
 #include <chrono>
+#include <sstream>
+#include <iomanip>
 
-#include <UI/UIWindow.h>
-#include <3D/BaseScene.h>
-#include <sigslot.h>
-#include <timer.h>
-
-#include <stb_image.h>
+// GUI include
 #include <GLFW/glfw3.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
+#include <stb_image.h>
 
+// OSG include
 #include <osgViewer/Viewer>
 #include <osgViewer/config/SingleWindow>
 #include <osg/Texture2D>
@@ -32,6 +33,28 @@
 #include <osgDB/ReadFile>
 #include <osgGA/TrackballManipulator>
 
+// Helper include
+#include <sigslot.h>
+
+#include <timer.h>
+#include <simState.h>
+
+#include <config.h>
+
+// UI
+#include <UI/UIWindow.h>
+#include <UI/UIWindow_Console.h>
+#include <UI/UIWindow_LibraryViewer.h>
+#include <UI/UIWindow_PlotingWorkspace.h>
+#include <UI/UIWindow_PropertiesViewer.h>
+#include <UI/UIWindow_SceneTreeViewer.h>
+#include <UI/UIWindow_ToolPanel.h>
+
+// 3D scene
+#include <3D/BaseScene.h>
+
+
+// OSG viewer manipulator
 class CustomTrackballManipulator : public osgGA::TrackballManipulator
 {
 public:
@@ -46,45 +69,121 @@ public:
     }
 };
 
+// Main window
 class CoreWindow: public sigslot::has_slots<>
 {
 private:
+    // OSG stuff
     osgViewer::Viewer m_viewer;
     osg::ref_ptr<CustomTrackballManipulator> m_manipulator;
-    Timer m_fpsTimer;
+    
+    // GLFW stuff
     GLFWwindow* m_window;
     GLFWimage* m_icon;
     int m_width;
     int m_height;
     const char* m_title;
     const char* m_iconPath;
+
+    // ImGui stuff
+    // ImGuiID dockspace_id;
+    // ImGuiID dock_id_up;
+    // ImGuiID dock_id_rightUp;
+    // ImGuiID dock_id_rightBottom;
+    // ImGuiID dock_id_left;
+    // ImGuiID dock_id_center;
+    // ImGuiID dock_id_bottom;
+    bool imGuiDockspaceInit = false;
+
+    // Simulation stuff
+    simState m_simState;
+    int m_simFrequency;
+    double m_simDuration;
+    double m_currentTime;
+
+    // Input
     bool rightMousePressed = false;
     bool leftMousePressed = false;
     bool middleMousePressed = false;
     bool shiftPressed = false;
     double lastX = 0;
     double lastY = 0;
+
+    // Timers
+    Timer m_fpsTimer;
+    Timer m_simTimer;
+
+    // Signals
+    sigslot::signal3<char, std::time_t, const char*> signal_console;
+    sigslot::signal2<double, double> signal_play;
+    sigslot::signal0<> signal_stop;
+
+    // Events
+    void EventNewFile();
+    void EventOpenFile(std::string p_filePath);
+    void EventSave();
+    void EventSaveAs(std::string p_filePath);
+
+    void EventUndo();
+    void EventRedo();
+
+    void EventCut();
+    void EventCopy();
+    void EventPaste();
+
+    void EventPlay(int p_frequency, float p_duration);
+    void EventPause();
+    void EventStop();
+
+    void EventOnError(int p_error,std::string p_description);
+
 protected:
-    std::vector<UIWindow*> m_GUIWindows;
-    BaseScene m_scene;
+    // GUI stuff
+    std::vector<UIWindow*>    m_GUIWindows;
+    UIWindow_Console          ConsoleWindow;
+    UIWindow_LibraryViewer    LibraryWindow;
+    UIWindow_PropertiesViewer PropertiesWindow;
+    UIWindow_SceneTreeViewer  SceneTreeWindow;
+    UIWindow_ToolPanel        ToolPanel;
+    UIWindow_PlotingWorkspace PlotingWindow;
+
+    // OSG stuff
     osg::Vec4 m_clearColor = osg::Vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
+    BaseScene m_scene;
+    
+
+    // Initialization functions
+    void initSignals();
+
+    int initGLFW();
+
+    void imguiInit();
+
+    void initGuiDockspace();
+
+    // Drawing
+    void draw();
+
+    void drawGUI();
+
+    // Update
+    void update();
+
+    void simulationStep(double p_dt);
+
+    virtual void loadScene(const char* scenePath){};
+
+    // Termination
+    void terminateGLFW();
+
+    void imguiTerminate();
+
+    // Callbacks and checkers
     bool isOpen()
     {
         return !glfwWindowShouldClose(m_window);
-    }
-
-    void draw();
-
-    virtual void drawGUI(){};
-
-    virtual void initGuiDockspace(){};
-
-    virtual void initSignals(){};
-
-    virtual void update(){};
-
-    virtual void loadScene(const char* scenePath){};
+    }  
 
     void setCallbacks();
 
@@ -99,27 +198,17 @@ protected:
     void mouseButtonCallback(int p_button, int p_action, int p_mods);
 
     void cursorPosCallback(double p_xpos, double p_ypos);
+
+
 public:
+    // Constructor
     CoreWindow(const char* p_title, const char* p_iconPath = nullptr, int p_width = 1280, int p_height = 720);
 
+    // Destructor
+    ~CoreWindow();
+
+    // Main loop
     int run(const char* scenePath = nullptr);
-};
 
-
-namespace GUI_Helper
-{
-    struct ImageData
-    {
-        ImTextureID texture;
-        int width;
-        int height;
-    };
     
-    bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height);
-
-    ImageData LoadImg(const char* filename);
-
-    bool ImGui_imageButton(ImageData imageData, bool enabled);
-
-    void ImGui_picture(ImageData imageData);
 };

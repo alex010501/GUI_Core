@@ -27,7 +27,6 @@ find_package(Bullet CONFIG REQUIRED)
 
 # GLFW, stb, tinyfiledialogs, iniparser
 find_package(glfw3 CONFIG REQUIRED)
-find_package(stb REQUIRED)
 find_package(tinyfiledialogs CONFIG REQUIRED)
 find_package(unofficial-iniparser CONFIG REQUIRED)
 
@@ -35,8 +34,7 @@ find_package(unofficial-iniparser CONFIG REQUIRED)
 set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIRS})
-# find_package(GLEW REQUIRED)
-# set(osg_OPENGL_PROFILE GL3)
+set(osg_OPENGL_PROFILE GL3)
 find_package(OpenSceneGraph REQUIRED COMPONENTS osg osgViewer osgDB osgGA osgUtil)
 find_package(assimp CONFIG REQUIRED)
 
@@ -46,8 +44,12 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extern/ImGuiInclude)
 # EventHandler
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extern/EventHandler)
 
+# STB_Image
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extern/stb_image)
+
 # Set config file with variables 
-set(RESOURCES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/res")
+set(RESOURCES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/resources")
+set(FONT_NAME "Cruinn_Bold.ttf")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CMake/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/config.h @ONLY)
 
 # Add include directories
@@ -62,19 +64,18 @@ file(GLOB_RECURSE GUI_Sources CONFIGURE_DEPENDS "include/*.h"
 add_library(GUI_Core STATIC ${GUI_Sources})
 
 # Link and include external libraries
-target_link_libraries(GUI_Core PRIVATE ${BULLET_LIBRARIES})
-target_include_directories(GUI_Core PRIVATE ${BULLET_INCLUDE_DIRS})
+target_link_libraries(GUI_Core PUBLIC ${BULLET_LIBRARIES})
+target_include_directories(GUI_Core PUBLIC ${BULLET_INCLUDE_DIRS})
 
-target_link_libraries(GUI_Core PRIVATE glfw)
-target_include_directories(GUI_Core PRIVATE ${Stb_INCLUDE_DIR})
-target_link_libraries(GUI_Core PRIVATE tinyfiledialogs::tinyfiledialogs)
-target_link_libraries(GUI_Core PRIVATE unofficial::iniparser::iniparser)
+target_link_libraries(GUI_Core PUBLIC glfw)
+target_link_libraries(GUI_Core PUBLIC stb_image)
+target_link_libraries(GUI_Core PUBLIC tinyfiledialogs::tinyfiledialogs)
+target_link_libraries(GUI_Core PUBLIC unofficial::iniparser::iniparser)
 
-# target_link_libraries(GUI_Core PRIVATE OpenGL::GL)
-# target_link_libraries(GUI_Core PRIVATE GLEW::GLEW)
-target_link_libraries(GUI_Core PRIVATE ${OPENSCENEGRAPH_LIBRARIES})
+target_link_libraries(GUI_Core PUBLIC OpenGL::GL)
+target_link_libraries(GUI_Core PUBLIC ${OPENSCENEGRAPH_LIBRARIES})
 target_include_directories(GUI_Core PUBLIC ${OPENSCENEGRAPH_INCLUDE_DIRS})
-target_link_libraries(GUI_Core PRIVATE assimp::assimp)
+target_link_libraries(GUI_Core PUBLIC assimp::assimp)
 
 # Link ImGui
 target_link_libraries(GUI_Core PUBLIC imguiInclude)
@@ -86,3 +87,9 @@ target_include_directories(GUI_Core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/extern/Ev
 
 # Example
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/example)
+
+# Copy resources to bin
+add_custom_command(TARGET GUI_Core POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                   ${CMAKE_CURRENT_SOURCE_DIR}/resources
+                   ${CMAKE_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}/resources)

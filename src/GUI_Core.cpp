@@ -3,9 +3,28 @@
 CoreWindow::CoreWindow(const char *p_title,
                        const char* p_iconPath,
                        int p_width, int p_height):
-                       m_title(p_title), m_iconPath(p_iconPath), m_width(p_width), m_height(p_height)
+                       m_title(p_title), m_iconPath(p_iconPath), m_width(p_width), m_height(p_height),
+                       ConsoleWindow("Console"),
+                       LibraryWindow("Library"),
+                       PropertiesWindow("Properties"),
+                       SceneTreeWindow("Scene Tree"),
+                       ToolPanel("Tools"),
+                       PlotingWindow("Plots")
 {
-    
+    this->m_clearColor = osg::Vec4(0.8, 0.8, 1.0, 1.0);
+    this->m_GUIWindows = {&this->ConsoleWindow,
+                          &this->LibraryWindow,
+                          &this->PropertiesWindow,
+                          &this->SceneTreeWindow,
+                          &this->ToolPanel,
+                          &this->PlotingWindow};
+    this->m_simState = SIM_STOP;
+    this->m_simFrequency = 25;
+}
+
+CoreWindow::~CoreWindow()
+{
+
 }
 
 int CoreWindow::run(const char* scenePath)
@@ -14,6 +33,92 @@ int CoreWindow::run(const char* scenePath)
     this->initSignals();
 
     // Initialise GLFW
+    int lv_glfwStatus = this->initGLFW();
+    if (lv_glfwStatus != 0)
+    {
+        std::cout << "GLFW Error: " << lv_glfwStatus << std::endl;
+        return lv_glfwStatus;
+    }
+
+    // Set up GLFW callbacks
+    this->setCallbacks();
+
+    // Setup Dear ImGui context
+    this->imguiInit();
+
+    // Initialize OSG viewer
+    osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
+    traits->readDISPLAY();
+    traits->setUndefinedScreenDetailsToDefaultScreen();
+    traits->windowName = this->m_title;    
+    this->m_viewer.setUpViewerAsEmbeddedInWindow(0, 0, this->m_width, this->m_height);   
+    this->m_viewer.getCamera()->setGraphicsContext(new osgViewer::GraphicsWindowEmbedded(traits.get()));
+    const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    this->m_viewer.getCamera()->setViewport(new osg::Viewport(0, 0, mode->width, mode->height));
+
+    // set up viewer
+    this->m_viewer.getCamera()->setClearColor(this->m_clearColor);
+    this->m_viewer.setSceneData(this->m_scene.getSceneRoot());
+    
+    // set up camera
+    osg::Vec3 eye(2.0, 2.0, 2.0);
+    osg::Vec3 center(0.0, 0.0, 0.0);
+    osg::Vec3 up(0.0, 1.0, 0.0);
+    this->m_viewer.getCamera()->setViewMatrixAsLookAt(eye, center, up);
+
+    // set up manipulator
+    this->m_manipulator = new CustomTrackballManipulator;
+    this->m_viewer.setCameraManipulator(this->m_manipulator);    
+
+    // Create simulation thread
+    auto updateMethod = std::bind(&CoreWindow::update, this);
+    std::thread updateThread(updateMethod);
+    this->m_fpsTimer.setFrequency(60);
+    this->m_fpsTimer.start();
+
+    // Start main loop
+    while (this->isOpen())
+    {        
+        this->draw();
+        glfwSwapBuffers(this->m_window);
+        glfwPollEvents();
+        this->m_fpsTimer.wait();
+    }
+
+    // Wait for simulation thread
+    updateThread.join();
+
+    // ImGui shutdown
+    this->imguiTerminate();
+
+    // GLFW shutdown
+    this->terminateGLFW();
+
+    return 0;
+}
+
+void CoreWindow::initSignals()
+{
+    // Connect from main window to all GUI windows
+    this->signal_console.connect(&(this->ConsoleWindow),   &UIWindow_Console::consoleCallback);
+
+    // Connect from tool panel to main window
+    this->ToolPanel.signal_NewFile .connect(this, &CoreWindow::EventNewFile);
+    this->ToolPanel.signal_OpenFile.connect(this, &CoreWindow::EventOpenFile);
+    this->ToolPanel.signal_Save    .connect(this, &CoreWindow::EventSave);
+    this->ToolPanel.signal_SaveAs  .connect(this, &CoreWindow::EventSaveAs);
+    this->ToolPanel.signal_Undo    .connect(this, &CoreWindow::EventUndo);
+    this->ToolPanel.signal_Redo    .connect(this, &CoreWindow::EventRedo);
+    this->ToolPanel.signal_Cut     .connect(this, &CoreWindow::EventCut);
+    this->ToolPanel.signal_Copy    .connect(this, &CoreWindow::EventCopy);
+    this->ToolPanel.signal_Paste   .connect(this, &CoreWindow::EventPaste);
+    this->ToolPanel.signal_Play    .connect(this, &CoreWindow::EventPlay);
+    this->ToolPanel.signal_Pause   .connect(this, &CoreWindow::EventPause);
+    this->ToolPanel.signal_Stop    .connect(this, &CoreWindow::EventStop);
+}
+
+int CoreWindow::initGLFW()
+{
     if (!glfwInit())
     {
         // Handle initialization error
@@ -56,77 +161,27 @@ int CoreWindow::run(const char* scenePath)
     }
     glfwMakeContextCurrent(this->m_window);
     glfwSwapInterval(1); // Enable vsync
-    this->setCallbacks();
 
-    // Setup Dear ImGui context
+    // Maximize window
+    glfwMaximizeWindow(this->m_window);
+
+    return 0;
+}
+
+void CoreWindow::imguiInit()
+{
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImPlot::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
+    std::string lv_font = "resources/Fonts/";
+    lv_font += FONT_NAME;
+    io.Fonts->AddFontFromFileTTF(lv_font.c_str(), 18.0f, NULL, io.Fonts->GetGlyphRangesCyrillic());
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(this->m_window, true);
     ImGui_ImplOpenGL3_Init("#version 460 core");
-
-    for (auto lv_GUI_windows: this->m_GUIWindows)
-        lv_GUI_windows->setupFileDialog();
-
-    // Initialize OSG viewer
-    osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
-    traits->readDISPLAY();
-    traits->setUndefinedScreenDetailsToDefaultScreen();
-    traits->windowName = this->m_title;    
-    this->m_viewer.setUpViewerAsEmbeddedInWindow(0, 0, this->m_width, this->m_height);   
-    this->m_viewer.getCamera()->setGraphicsContext(new osgViewer::GraphicsWindowEmbedded(traits.get()));
-    const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-    this->m_viewer.getCamera()->setViewport(new osg::Viewport(0, 0, mode->width, mode->height));
-
-    // Maximize window
-    glfwMaximizeWindow(this->m_window);
-
-    // load scene in 3D workspace
-    this->loadScene(scenePath);
-
-    // set up viewer
-    this->m_viewer.getCamera()->setClearColor(this->m_clearColor);
-    this->m_viewer.setSceneData(this->m_scene.getSceneRoot());
-    
-    osg::Vec3 eye(2.0, 2.0, 2.0);
-    osg::Vec3 center(0.0, 0.0, 0.0);
-    osg::Vec3 up(0.0, 1.0, 0.0);
-    this->m_viewer.getCamera()->setViewMatrixAsLookAt(eye, center, up);
-
-    this->m_manipulator = new CustomTrackballManipulator;
-    this->m_viewer.setCameraManipulator(this->m_manipulator);    
-
-    auto updateMethod = std::bind(&CoreWindow::update, this);
-    std::thread updateThread(updateMethod);
-    this->m_fpsTimer.setFrequency(60);
-    this->m_fpsTimer.start();
-
-    while (!glfwWindowShouldClose(this->m_window))
-    {        
-        this->draw();
-        glfwSwapBuffers(this->m_window);
-        glfwPollEvents();
-        this->m_fpsTimer.wait();
-    }
-
-    updateThread.join();
-
-    // ImGui shutdown
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-    ImPlot::DestroyContext();
-
-    // GLFW shutdown
-    stbi_image_free(this->m_icon[0].pixels);
-    glfwDestroyWindow(this->m_window);
-    glfwTerminate();
-
-    return 0;
 }
 
 void CoreWindow::draw()
@@ -135,7 +190,7 @@ void CoreWindow::draw()
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-
+    
     // Dockspace settings
     this->initGuiDockspace();
 
@@ -151,6 +206,82 @@ void CoreWindow::draw()
 
     // ImGui-OpenGL render
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void CoreWindow::drawGUI()
+{
+    for (auto window : this->m_GUIWindows)
+    {
+        window->draw();
+    }
+}
+
+void CoreWindow::initGuiDockspace()
+{
+    ImGuiID dockspace_id = ImGui::DockSpaceOverViewport(0U, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+    ImGuiID dock_id_up, dock_id_rightUp, dock_id_rightBottom, dock_id_left, dock_id_center, dock_id_bottom;
+    if (!(this->imGuiDockspaceInit))
+    {
+        this->imGuiDockspaceInit = true;
+        ImGui::DockBuilderRemoveNode(dockspace_id);
+        ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace);
+        ImGui::DockBuilderSetNodeSize(dockspace_id, ImGui::GetMainViewport()->Size);
+
+        ImGui::DockBuilderSplitNode(  dockspace_id,  ImGuiDir_Up,    0.05f,         &dock_id_up, &dock_id_center);
+        ImGui::DockBuilderSplitNode(dock_id_center,  ImGuiDir_Left,  0.25f,       &dock_id_left, &dock_id_center);
+        ImGui::DockBuilderSplitNode(dock_id_center,  ImGuiDir_Right, 0.2f,     &dock_id_rightUp, &dock_id_center);
+        ImGui::DockBuilderSplitNode(dock_id_center,  ImGuiDir_Down,  0.2f,      &dock_id_bottom, &dock_id_center);
+        ImGui::DockBuilderSplitNode(dock_id_rightUp, ImGuiDir_Down,  0.6f, &dock_id_rightBottom, &dock_id_rightUp);
+
+        ImGui::DockBuilderDockWindow(     "Tools", dock_id_up);
+        ImGui::DockBuilderDockWindow("Scene Tree", dock_id_rightUp);
+        ImGui::DockBuilderDockWindow("Properties", dock_id_rightBottom);
+        ImGui::DockBuilderDockWindow(     "Plots", dock_id_left);
+        ImGui::DockBuilderDockWindow(   "Console", dock_id_bottom);        
+        ImGui::DockBuilderDockWindow(   "Library", dock_id_bottom);
+
+        ImGui::DockBuilderFinish(dockspace_id);
+    }
+}
+
+void CoreWindow::update()
+{
+    while(this->isOpen())
+    {
+        if (this->m_simState == SIM_PLAY)
+        {
+            this->m_simTimer.start();
+            this->simulationStep(1.0/this->m_simFrequency);
+            this->m_currentTime += 1.0/this->m_simFrequency;
+            if (this-> m_currentTime >= this->m_simDuration)
+                this->EventStop();
+            this->m_simTimer.wait();       
+        }
+        else
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }       
+    }
+}
+
+void CoreWindow::simulationStep(double p_dt)
+{
+
+}
+
+void CoreWindow::imguiTerminate()
+{
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+    ImPlot::DestroyContext();
+}
+
+void CoreWindow::terminateGLFW()
+{
+    stbi_image_free(this->m_icon[0].pixels);
+    glfwDestroyWindow(this->m_window);
+    glfwTerminate();
 }
 
 void CoreWindow::resizeCallback(int p_width, int p_height)
@@ -274,67 +405,95 @@ void CoreWindow::setCallbacks()
     glfwSetKeyCallback(this->m_window, CoreWindowKeyCallback);
 }
 
-
-// Addition helper functions
-bool GUI_Helper::LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height)
+void CoreWindow::EventNewFile()
 {
-    // Load from file
-    int image_width = 0;
-    int image_height = 0;
-    unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
-
-    if (image_data == NULL)
-        return false;
-    // Create a OpenGL texture identifier
-    GLuint image_texture;
-    glGenTextures(1, &image_texture);
-    glBindTexture(GL_TEXTURE_2D, image_texture);
-
-    // Setup filtering parameters for display
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
-    
-    // Upload pixels into texture
-#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-#endif
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
-    stbi_image_free(image_data);
-
-    *out_texture = image_texture;
-    *out_width = image_width;
-    *out_height = image_height;
-
-    return true;
+    this->signal_console('w', std::time(nullptr), "Created new file");
 }
 
-GUI_Helper::ImageData GUI_Helper::LoadImg(const char* filename)
+void CoreWindow::EventOpenFile(std::string p_filePath)
 {
-    int my_image_width = 0;
-    int my_image_height = 0;
-    GLuint my_image_texture = 0;
-    bool ret = GUI_Helper::LoadTextureFromFile(filename, &my_image_texture, &my_image_width, &my_image_height);
-    IM_ASSERT(ret);
-
-    GUI_Helper::ImageData imageData;
-    imageData.texture = (void*)(intptr_t)my_image_texture;
-    imageData.width = my_image_width;
-    imageData.height = my_image_height;
-
-    return imageData;
+    std::string lv_answer = "Opened file ";
+    lv_answer += p_filePath;
+    this->signal_console('g', std::time(nullptr), lv_answer.c_str());
 }
 
-bool GUI_Helper::ImGui_imageButton(GUI_Helper::ImageData imageData, bool enabled)
-{   
-    ImGui::BeginDisabled(!enabled);
-    bool ret = ImGui::IsItemClicked(ImGui::ImageButton("Button", imageData.texture, ImVec2(imageData.width, imageData.height)));
-    ImGui::EndDisabled();
-    return ret;
+void CoreWindow::EventSave()
+{
+    this->signal_console('g', std::time(nullptr), "Saved file");
 }
 
-void GUI_Helper::ImGui_picture(GUI_Helper::ImageData imageData)
+void CoreWindow::EventSaveAs(std::string p_filePath)
 {
-    ImGui::Image(imageData.texture, ImVec2(imageData.width, imageData.height));
+    std::string lv_answer = "File saved at ";
+    lv_answer += p_filePath;
+    this->signal_console('g', std::time(nullptr), lv_answer.c_str());
+}
+
+void CoreWindow::EventUndo()
+{
+    this->signal_console('w', std::time(nullptr), "Undid action");
+}
+
+void CoreWindow::EventRedo()
+{
+    this->signal_console('w', std::time(nullptr), "Redid action");
+}
+
+void CoreWindow::EventCut()
+{
+    this->signal_console('w', std::time(nullptr), "Cut selection");
+}
+
+void CoreWindow::EventCopy()
+{
+    this->signal_console('w', std::time(nullptr), "Copied selection");
+}
+
+void CoreWindow::EventPaste()
+{
+    this->signal_console('w', std::time(nullptr), "Pasted selection");
+}
+
+void CoreWindow::EventPlay(int p_frequency, float p_duration)
+{
+    if (this->m_simState == SIM_PAUSE)
+        this->signal_console('w', std::time(nullptr), "Resume simulation");
+    else
+    {
+        this->m_simFrequency = p_frequency;
+        this->m_simTimer.setFrequency(this->m_simFrequency);
+        this->m_simDuration = p_duration;
+
+        this->signal_play( 1.0/this->m_simFrequency, p_duration);
+
+        std::stringstream lv_stream;
+        lv_stream << std::fixed << std::setprecision(1) << p_duration;
+
+        std::string str = "Simulation started; Selected Frequency: " + std::to_string(p_frequency) + " Hz; Duration: " + lv_stream.str() + " s";
+        this->signal_console('w', std::time(nullptr), str.c_str());
+    }
+    this->m_simState = SIM_PLAY;    
+}
+
+void CoreWindow::EventPause()
+{
+    this->m_simState = SIM_PAUSE;
+    this->signal_console('w', std::time(nullptr), "Simulation paused");
+}
+
+void CoreWindow::EventStop()
+{
+    if (this->m_simState == SIM_STOP)
+        return;    
+    this->m_simState = SIM_STOP;
+    this->ToolPanel.m_state = SIM_STOP;
+    this->m_currentTime = 0.0;
+    this->signal_stop();
+    this->signal_console('w', std::time(nullptr), "Simulation stopped");
+}
+
+void CoreWindow::EventOnError(int p_error, std::string p_description)
+{
+    std::string lv_error_str = "Error #" + std::to_string(p_error) + ": " + p_description;
+    this->signal_console('r', std::time(nullptr), lv_error_str.c_str());
 }

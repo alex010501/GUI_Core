@@ -1,6 +1,7 @@
 #ifndef CONFIG_H_IN
 #define CONFIG_H_IN
  
-#define RESOURCES_PATH "C:/GUI_Core/res"
+#define RESOURCES_PATH "C:/GUI_Core/resources"
+#define FONT_NAME "Cruinn_Bold.ttf"
  
 #endif // CONFIG_H_IN

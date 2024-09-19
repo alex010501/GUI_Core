@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include <GL/glew.h>
+// #include <GL/glew.h>
 
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -24,8 +24,6 @@ public:
 
     UIWindow(const char* p_title): m_title(p_title)
     {}
-
-    virtual void setupFileDialog(){}
 
     virtual void draw(){}
 };
