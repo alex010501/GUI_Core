@@ -2,14 +2,14 @@
 
 #include <string>
 
-// #include <GL/glew.h>
+#include <sigslot.h>
 
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <implot.h>
 #include <implot_internal.h>
 
-#include <sigslot.h>
+#include <UI/UIHelper.h>
 
 class UIWindow: public sigslot::has_slots<> {
 protected:

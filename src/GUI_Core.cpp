@@ -46,29 +46,11 @@ int CoreWindow::run(const char* scenePath)
     // Setup Dear ImGui context
     this->imguiInit();
 
-    // Initialize OSG viewer
-    osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
-    traits->readDISPLAY();
-    traits->setUndefinedScreenDetailsToDefaultScreen();
-    traits->windowName = this->m_title;    
-    this->m_viewer.setUpViewerAsEmbeddedInWindow(0, 0, this->m_width, this->m_height);   
-    this->m_viewer.getCamera()->setGraphicsContext(new osgViewer::GraphicsWindowEmbedded(traits.get()));
-    const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-    this->m_viewer.getCamera()->setViewport(new osg::Viewport(0, 0, mode->width, mode->height));
-
-    // set up viewer
-    this->m_viewer.getCamera()->setClearColor(this->m_clearColor);
-    this->m_viewer.setSceneData(this->m_scene.getSceneRoot());
+    // Set up OSG
+    this->initOSG();
     
-    // set up camera
-    osg::Vec3 eye(2.0, 2.0, 2.0);
-    osg::Vec3 center(0.0, 0.0, 0.0);
-    osg::Vec3 up(0.0, 1.0, 0.0);
-    this->m_viewer.getCamera()->setViewMatrixAsLookAt(eye, center, up);
-
-    // set up manipulator
-    this->m_manipulator = new CustomTrackballManipulator;
-    this->m_viewer.setCameraManipulator(this->m_manipulator);    
+    // Load scene
+    this->loadScene();
 
     // Create simulation thread
     auto updateMethod = std::bind(&CoreWindow::update, this);
@@ -182,6 +164,35 @@ void CoreWindow::imguiInit()
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(this->m_window, true);
     ImGui_ImplOpenGL3_Init("#version 460 core");
+}
+
+void CoreWindow::initOSG()
+{
+    // Initialize OSG viewer
+    osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
+    traits->readDISPLAY();
+    traits->setUndefinedScreenDetailsToDefaultScreen();
+    traits->windowName = this->m_title;    
+    this->m_viewer.setUpViewerAsEmbeddedInWindow(0, 0, this->m_width, this->m_height);   
+    this->m_viewer.getCamera()->setGraphicsContext(new osgViewer::GraphicsWindowEmbedded(traits.get()));
+    const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    this->m_viewer.getCamera()->setViewport(new osg::Viewport(0, 0, mode->width, mode->height));
+
+    // set up viewer
+    this->m_viewer.getCamera()->setClearColor(this->m_clearColor);    
+    
+    // set up manipulator
+    this->m_manipulator = new CustomTrackballManipulator;
+    osg::Vec3 eye(5.0, 5.0, 5.0);
+    osg::Vec3 center(0.0, 0.0, 0.0);
+    osg::Vec3 up(0.0, 0.0, 1.0);
+    this->m_manipulator->setHomePosition(eye, center, up);
+    this->m_viewer.setCameraManipulator(this->m_manipulator);
+}
+
+void CoreWindow::loadScene()
+{
+    this->m_viewer.setSceneData(this->m_scene.getSceneRoot());
 }
 
 void CoreWindow::draw()

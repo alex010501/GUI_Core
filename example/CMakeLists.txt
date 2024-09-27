@@ -3,4 +3,4 @@ set(SOURCES main.cpp)
 
 add_executable(example ${SOURCES})
 
-target_link_libraries(example PUBLIC GUI_Core)
+target_link_libraries(example PRIVATE GUI_Core)

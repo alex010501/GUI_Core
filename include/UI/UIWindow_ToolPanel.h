@@ -1,6 +1,5 @@
 #pragma once
 
-#include <GUI_Helper.h>
 #include <UI/UIWindow.h>
 
 #include <simState.h>
@@ -14,21 +13,21 @@ private:
     float m_duration;
 
     // Icons
-    GUI_Helper::ImageData NewFileIcon;
-    GUI_Helper::ImageData OpenFileIcon;
-    GUI_Helper::ImageData SaveIcon;
-    GUI_Helper::ImageData SaveAsIcon;
-    GUI_Helper::ImageData UndoIcon;
-    GUI_Helper::ImageData RedoIcon;
-    GUI_Helper::ImageData CutIcon;
-    GUI_Helper::ImageData CopyIcon;
-    GUI_Helper::ImageData PasteIcon;
-    GUI_Helper::ImageData TimerIcon;
-    GUI_Helper::ImageData FrequencyIcon;
-    GUI_Helper::ImageData SpeedIcon;
-    GUI_Helper::ImageData CalculateIcon;
-    GUI_Helper::ImageData StopIcon;
-    GUI_Helper::ImageData Play_PauseIcon;
+    UIHelper::ImageData NewFileIcon;
+    UIHelper::ImageData OpenFileIcon;
+    UIHelper::ImageData SaveIcon;
+    UIHelper::ImageData SaveAsIcon;
+    UIHelper::ImageData UndoIcon;
+    UIHelper::ImageData RedoIcon;
+    UIHelper::ImageData CutIcon;
+    UIHelper::ImageData CopyIcon;
+    UIHelper::ImageData PasteIcon;
+    UIHelper::ImageData TimerIcon;
+    UIHelper::ImageData FrequencyIcon;
+    UIHelper::ImageData SpeedIcon;
+    UIHelper::ImageData CalculateIcon;
+    UIHelper::ImageData StopIcon;
+    UIHelper::ImageData Play_PauseIcon;
 
     // Private methods
     void loadIcons();

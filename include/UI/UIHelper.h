@@ -1,5 +1,4 @@
-#ifndef GUI_HELPER_H
-#define GUI_HELPER_H
+#pragma once
 
 #include <string>
 
@@ -16,7 +15,7 @@
 #include <osgDB/ReadFile>
 #include <osgGA/TrackballManipulator>
 
-namespace GUI_Helper
+namespace UIHelper
 {
     struct ImageData
     {
@@ -33,6 +32,3 @@ namespace GUI_Helper
 
     void ImGui_picture(ImageData imageData);
 };
-
-
-#endif

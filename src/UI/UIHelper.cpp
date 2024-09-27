@@ -1,6 +1,6 @@
-#include <GUI_Helper.h>
+#include <UI/UIHelper.h>
 
-bool GUI_Helper::LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height)
+bool UIHelper::LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height)
 {
     // Load from file
     int image_width = 0;
@@ -34,15 +34,15 @@ bool GUI_Helper::LoadTextureFromFile(const char* filename, GLuint* out_texture, 
     return true;
 }
 
-GUI_Helper::ImageData GUI_Helper::LoadImg(const char* filename)
+UIHelper::ImageData UIHelper::LoadImg(const char* filename)
 {
     int my_image_width = 0;
     int my_image_height = 0;
     GLuint my_image_texture = 0;
-    bool ret = GUI_Helper::LoadTextureFromFile(filename, &my_image_texture, &my_image_width, &my_image_height);
+    bool ret = UIHelper::LoadTextureFromFile(filename, &my_image_texture, &my_image_width, &my_image_height);
     IM_ASSERT(ret);
 
-    GUI_Helper::ImageData imageData;
+    UIHelper::ImageData imageData;
     imageData.texture = (void*)(intptr_t)my_image_texture;
     imageData.width = my_image_width;
     imageData.height = my_image_height;
@@ -50,7 +50,7 @@ GUI_Helper::ImageData GUI_Helper::LoadImg(const char* filename)
     return imageData;
 }
 
-bool GUI_Helper::ImGui_imageButton(GUI_Helper::ImageData imageData, bool enabled, std::string buttonName)
+bool UIHelper::ImGui_imageButton(UIHelper::ImageData imageData, bool enabled, std::string buttonName)
 {   
     ImGui::BeginDisabled(!enabled);
     bool ret = ImGui::IsItemClicked(ImGui::ImageButton(buttonName.c_str(), imageData.texture, ImVec2(imageData.width, imageData.height)));
@@ -58,7 +58,7 @@ bool GUI_Helper::ImGui_imageButton(GUI_Helper::ImageData imageData, bool enabled
     return ret;
 }
 
-void GUI_Helper::ImGui_picture(GUI_Helper::ImageData imageData)
+void UIHelper::ImGui_picture(UIHelper::ImageData imageData)
 {
     ImGui::Image(imageData.texture, ImVec2(imageData.width, imageData.height));
 }

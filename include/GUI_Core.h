@@ -51,7 +51,7 @@
 #include <UI/UIWindow_ToolPanel.h>
 
 // 3D scene
-#include <3D/BaseScene.h>
+#include <3D/Scene.h>
 
 
 // OSG viewer manipulator
@@ -86,13 +86,6 @@ private:
     const char* m_iconPath;
 
     // ImGui stuff
-    // ImGuiID dockspace_id;
-    // ImGuiID dock_id_up;
-    // ImGuiID dock_id_rightUp;
-    // ImGuiID dock_id_rightBottom;
-    // ImGuiID dock_id_left;
-    // ImGuiID dock_id_center;
-    // ImGuiID dock_id_bottom;
     bool imGuiDockspaceInit = false;
 
     // Simulation stuff
@@ -150,33 +143,29 @@ protected:
     // OSG stuff
     osg::Vec4 m_clearColor = osg::Vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-    BaseScene m_scene;
+    // Scene
+    Scene m_scene;
     
-
     // Initialization functions
     void initSignals();
-
     int initGLFW();
-
     void imguiInit();
-
+    void initOSG();
     void initGuiDockspace();
+
+    // Scene loading
+    void loadScene();
 
     // Drawing
     void draw();
-
     void drawGUI();
 
     // Update
     void update();
-
     void simulationStep(double p_dt);
-
-    virtual void loadScene(const char* scenePath){};
 
     // Termination
     void terminateGLFW();
-
     void imguiTerminate();
 
     // Callbacks and checkers
@@ -186,19 +175,12 @@ protected:
     }  
 
     void setCallbacks();
-
     void resizeCallback(int p_width, int p_height);
-
     void posCallback(int p_xpos, int p_ypos);
-
     void keyCallback(int p_key, int p_scancode, int p_action, int p_mods);
-
     void scrollCallback(double p_xoffset, double p_yoffset);
-
     void mouseButtonCallback(int p_button, int p_action, int p_mods);
-
     void cursorPosCallback(double p_xpos, double p_ypos);
-
 
 public:
     // Constructor

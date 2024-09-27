@@ -31,15 +31,23 @@ void UIWindow_Console::draw()
     ImGui::InputText(" ", m_commandBuffer, IM_ARRAYSIZE(m_commandBuffer));
     ImGui::PopItemWidth();
     ImGui::SameLine();
+
+    ImGui::PushItemWidth(100);
     if (ImGui::Button("Enter"))
     {
         comandCallback();
     }
+    ImGui::PopItemWidth();
+
     ImGui::SameLine();
+
+    ImGui::PushItemWidth(100);
     if (ImGui::Button("Save log"))
     {
 
     }
+    ImGui::PopItemWidth();
+
     ImGui::End();
 }
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <GUI_Helper.h>
 #include <UI/UIWindow.h>
 
 class UIWindow_PropertiesViewer: public UIWindow {

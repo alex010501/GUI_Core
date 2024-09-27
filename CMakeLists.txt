@@ -6,6 +6,11 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     message(STATUS "Building GUI_Core as main project")
     # Set vcpkg toolchain
     set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake)
+    
+    # Set build folders
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 endif()
 
 # Project name
@@ -15,12 +20,10 @@ project(GUI_Core)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Set build folders
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib/${CMAKE_BUILD_TYPE})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib/${CMAKE_BUILD_TYPE})
-
 # External libraries
+
+# Eigen - linear algebra library
+find_package(Eigen3 CONFIG REQUIRED)
 
 # Bullet - physics library
 find_package(Bullet CONFIG REQUIRED)
@@ -49,6 +52,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extern/stb_image)
 
 # Set config file with variables 
 set(RESOURCES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/resources")
+# set(FONT_NAME "Monocraft.otf")
 set(FONT_NAME "Cruinn_Bold.ttf")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CMake/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/config.h @ONLY)
 
@@ -64,6 +68,8 @@ file(GLOB_RECURSE GUI_Sources CONFIGURE_DEPENDS "include/*.h"
 add_library(GUI_Core STATIC ${GUI_Sources})
 
 # Link and include external libraries
+target_link_libraries(GUI_Core PUBLIC Eigen3::Eigen)
+
 target_link_libraries(GUI_Core PUBLIC ${BULLET_LIBRARIES})
 target_include_directories(GUI_Core PUBLIC ${BULLET_INCLUDE_DIRS})
 
@@ -92,4 +98,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/example)
 add_custom_command(TARGET GUI_Core POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy_directory
                    ${CMAKE_CURRENT_SOURCE_DIR}/resources
-                   ${CMAKE_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}/resources)
+                   ${CMAKE_SOURCE_DIR}/bin/Debug/resources)
+
+add_custom_command(TARGET GUI_Core POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                   ${CMAKE_CURRENT_SOURCE_DIR}/resources
+                   ${CMAKE_SOURCE_DIR}/bin/Release/resources)

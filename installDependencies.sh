@@ -8,4 +8,4 @@ if [ ! -d "vcpkg" ]; then
     cd ..
 fi
 
-./vcpkg/vcpkg install glfw3 bullet3 vsg vsgxchange opengl glew stb tinyfiledialogs
+./vcpkg/vcpkg install osg glfw3 bullet3 assimp tinyfiledialogs iniparser --clean-after-build

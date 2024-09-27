@@ -1,5 +1,5 @@
-#ifndef _SIMSTATE_h_
-#define _SIMSTATE_h_
+#ifndef _SIMSTATE_H_
+#define _SIMSTATE_H_
 
 enum simState
 {
