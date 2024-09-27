@@ -3,7 +3,7 @@
 StaticObject::StaticObject(const char* p_name, const char* p_modelPath, osg::MatrixTransform* p_worldTransform, BaseObject* p_parent, osg::Vec4 p_color):
 BaseObject(p_name, p_worldTransform, p_parent)
 {
-    if(p_modelPath != "primitive")
+    if(p_modelPath)
     {
         this->m_mesh = ObjectsHelper::loadMesh(p_modelPath);
         this->setColor(p_color);
