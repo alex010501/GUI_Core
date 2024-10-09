@@ -2,6 +2,9 @@
 
 Scene::Scene()
 {
+	//Set the name of the scene
+	this->m_sceneName = "New scene";
+
 	//Set the space size of the world and limit the spatial range of rigid body motion
     btVector3 worldAabbMin(-10000, -10000, -10000);
     btVector3 worldAabbMax(10000, 10000, 10000);
@@ -22,20 +25,25 @@ Scene::Scene()
     //Set the gravity of the physical world (here, the gravity on the y axis is set to 10N/kg)
     this->m_dynamicsWorld->setGravity(btVector3(0, -9.81, 0));
 
-	this->m_root = new osg::Group;
+	this->m_OSGroot = new osg::Group;
 
 	this->m_floor = createFloor();
 	this->m_XYZAxes = createAxes();
 	this->m_groundbody = createGround();
     this->m_dynamicsWorld->addRigidBody(this->m_groundbody);
 
-	this->m_root->addChild(this->m_floor);
-	this->m_root->addChild(this->m_XYZAxes);
+	this->m_OSGroot->addChild(this->m_floor);
+	this->m_OSGroot->addChild(this->m_XYZAxes);
 
-	osg::ref_ptr<osg::ShapeDrawable> sphere = new osg::ShapeDrawable(new osg::Sphere(osg::Vec3(2, 2, 5), 0.5));
-	sphere->setColor(osg::Vec4(0.5, 1.0, 0.5, 1.0));
+	std::string lv_sceneName = this->m_sceneName + " root";
+	this->m_sceneRoot = SceneRoot(lv_sceneName.c_str());
+	this->m_OSGroot->addChild(this->m_sceneRoot.getLocalTransform());
+	this->m_selectedEntity = &(this->m_sceneRoot);
 
-	this->m_root->addChild(sphere);
+	// osg::ref_ptr<osg::ShapeDrawable> sphere = new osg::ShapeDrawable(new osg::Sphere(osg::Vec3(2, 2, 5), 0.5));
+	// sphere->setColor(osg::Vec4(0.5, 1.0, 0.5, 1.0));
+
+	// this->m_OSGroot->addChild(sphere);
 }
 
 Scene::~Scene()
@@ -125,20 +133,68 @@ osg::ref_ptr<osg::Group> Scene::createAxes()
 	return axes.release();
 }
 
+void Scene::addEntity(EntityInfo p_info)
+{
+	if (this->m_selectedEntity->getEntityType() == entityType::FOLDER)
+	{
+		p_info.parent = this->m_selectedEntity;
+	}
+	Entity* lv_entity;
+
+	switch (entityType(p_info.entityType))
+	{
+	case DUMMY:
+		lv_entity = new Dummy(p_info.name, p_info.worldTransform, p_info.parent);
+		break;
+	case FOLDER:
+		lv_entity = new Folder(p_info.name, p_info.worldTransform, p_info.parent);
+		break;
+
+	case OBJECT:
+		lv_entity = new Object(p_info.name, p_info.worldTransform, p_info.parent, p_info.modelPath);
+		break;
+
+	case CUBE:
+		lv_entity = new CubeObject(p_info.name, p_info.a, p_info.b, p_info.c, p_info.worldTransform, p_info.parent);
+		break;
+
+	case SPHERE:
+		lv_entity = new SphereObject(p_info.name, p_info.a, p_info.worldTransform, p_info.parent);
+		break;
+
+	case CYLINDER:
+		lv_entity = new CylinderObject(p_info.name, p_info.a, p_info.b, p_info.worldTransform, p_info.parent);
+		break;
+
+	case MULTIBODY:
+		lv_entity = new MultiBody(p_info.name, p_info.worldTransform, p_info.parent);
+		break;
+	
+	default:
+		lv_entity = nullptr;
+		break;
+	}
+
+	if (this->m_selectedEntity->getEntityType() == entityType::FOLDER)
+	{
+		std::cout << "Added entity into folder: " << p_info.name << std::endl;
+		static_cast<Folder*>(this->m_selectedEntity)->addChild(lv_entity);
+	}
+	else
+	{
+		std::cout << "Added entity into scene root: " << p_info.name << std::endl;
+		this->m_sceneRoot.addChild(lv_entity);
+	}
+}
+
 void Scene::initPhysics()
 {
-	for(auto& object : this->m_objectList)
-	{
-		object.initPhysics(this->m_dynamicsWorld);
-	}
+	this->m_sceneRoot.initPhysics(this->m_dynamicsWorld);
 }
 
 void Scene::update(double p_dt)
 {
 	this->m_dynamicsWorld->stepSimulation(p_dt, 10, 0.001);
 
-	for (auto& object : this->m_objectList)
-	{
-		object.update();
-	}
+	this->m_sceneRoot.update();
 }

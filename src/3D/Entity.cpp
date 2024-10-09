@@ -1,26 +1,19 @@
-#include <3D/Objects/BaseObject.h>
+#include <3D/Entity.h>
 
-BaseObject::BaseObject(const char* p_name, osg::ref_ptr<osg::MatrixTransform> p_worldTransform, BaseObject* p_parent):
+Entity::Entity(const char* p_name, osg::Matrix p_worldTransform, Entity* p_parent):
 m_name(p_name), m_parent(p_parent)
 {
     if(this->m_parent)
     {
         osg::ref_ptr<osg::MatrixTransform> lv_parentTransform = this->m_parent->getWorldTransform();
-        osg::Matrix lv_localTransformMatrix = lv_parentTransform->getInverseMatrix() * p_worldTransform->getMatrix();
+        osg::Matrix lv_localTransformMatrix = lv_parentTransform->getInverseMatrix() * p_worldTransform;
         this->m_localTransform = new osg::MatrixTransform(lv_localTransformMatrix);
     }
     else
-        this->m_localTransform = p_worldTransform;
+        this->m_localTransform = new osg::MatrixTransform(p_worldTransform);
 }
 
-void BaseObject::setColor(osg::Vec4 p_color)
-{
-    this->m_color = p_color;
-    if(this->m_mesh)
-        ObjectsHelper::setColor(this->m_mesh, this->m_color);
-}
-
-osg::ref_ptr<osg::MatrixTransform> BaseObject::getWorldTransform()
+osg::ref_ptr<osg::MatrixTransform> Entity::getWorldTransform()
 {
     if(this->m_parent)
     {
@@ -32,15 +25,18 @@ osg::ref_ptr<osg::MatrixTransform> BaseObject::getWorldTransform()
         return this->m_localTransform;
 }
 
-osg::ref_ptr<osg::MatrixTransform> BaseObject::getLocalTransform()
+void Entity::setParent(Entity* p_parent)
+{
+    this->m_parent = p_parent;
+}
+
+osg::ref_ptr<osg::MatrixTransform> Entity::getLocalTransform()
 {
     return this->m_localTransform;
 }
 
-void BaseObject::moveObject(ObjectsHelper::moveOption p_moveOption, osg::Matrix p_transform)
+void Entity::move(moveOption p_moveOption, osg::Matrix p_transform)
 {
-    using namespace ObjectsHelper;
-
     switch (p_moveOption)
     {
     case LOCAL_REL:
@@ -64,7 +60,7 @@ void BaseObject::moveObject(ObjectsHelper::moveOption p_moveOption, osg::Matrix 
         else
             this->m_localTransform->setMatrix(p_transform);
         break;
-    
+            
     default:
         break;
     }

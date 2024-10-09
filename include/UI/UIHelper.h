@@ -17,6 +17,7 @@
 
 namespace UIHelper
 {
+
     struct ImageData
     {
         ImTextureID texture;
@@ -31,4 +32,10 @@ namespace UIHelper
     bool ImGui_imageButton(ImageData imageData, bool enabled, std::string buttonName);
 
     void ImGui_picture(ImageData imageData);
+
+    std::string labelPrefix(const char* const label);
+
+    // bool BeginButtonDropDown(const char* label, ImVec2 buttonSize);
+
+    // void EndButtonDropDown();
 };

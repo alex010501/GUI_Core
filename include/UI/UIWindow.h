@@ -9,6 +9,7 @@
 #include <implot.h>
 #include <implot_internal.h>
 
+#include <UI/IconsFontAwesome6.h>
 #include <UI/UIHelper.h>
 
 class UIWindow: public sigslot::has_slots<> {

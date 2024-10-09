@@ -6,6 +6,8 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     message(STATUS "Building GUI_Core as main project")
     # Set vcpkg toolchain
     set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake)
+    set(ENV{OSG_LIBRARY_PATH} ${VCPKG_INSTALLED_DIR}/x64-windows/lib)
+    set(ENV{OSG_PLUGINS_PATH} ${VCPKG_INSTALLED_DIR}/x64-windows/plugins)
     
     # Set build folders
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
@@ -80,6 +82,8 @@ target_link_libraries(GUI_Core PUBLIC unofficial::iniparser::iniparser)
 
 target_link_libraries(GUI_Core PUBLIC OpenGL::GL)
 target_link_libraries(GUI_Core PUBLIC ${OPENSCENEGRAPH_LIBRARIES})
+target_link_directories(GUI_Core PUBLIC $ENV{OSG_LIBRARY_PATH})
+target_link_directories(GUI_Core PUBLIC $ENV{OSG_PLUGINS_PATH})
 target_include_directories(GUI_Core PUBLIC ${OPENSCENEGRAPH_INCLUDE_DIRS})
 target_link_libraries(GUI_Core PUBLIC assimp::assimp)
 

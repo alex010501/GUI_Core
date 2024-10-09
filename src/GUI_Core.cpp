@@ -3,13 +3,14 @@
 CoreWindow::CoreWindow(const char *p_title,
                        const char* p_iconPath,
                        int p_width, int p_height):
-                       m_title(p_title), m_iconPath(p_iconPath), m_width(p_width), m_height(p_height),
+                       m_width(p_width), m_height(p_height), m_title(p_title), m_iconPath(p_iconPath),
                        ConsoleWindow("Console"),
                        LibraryWindow("Library"),
                        PropertiesWindow("Properties"),
                        SceneTreeWindow("Scene Tree"),
                        ToolPanel("Tools"),
-                       PlotingWindow("Plots")
+                       PlotingWindow("Plots"),
+                       AddEntityDialog("Add...")
 {
     this->m_clearColor = osg::Vec4(0.8, 0.8, 1.0, 1.0);
     this->m_GUIWindows = {&this->ConsoleWindow,
@@ -17,7 +18,8 @@ CoreWindow::CoreWindow(const char *p_title,
                           &this->PropertiesWindow,
                           &this->SceneTreeWindow,
                           &this->ToolPanel,
-                          &this->PlotingWindow};
+                          &this->PlotingWindow,
+                          &this->AddEntityDialog};
     this->m_simState = SIM_STOP;
     this->m_simFrequency = 25;
 }
@@ -97,6 +99,11 @@ void CoreWindow::initSignals()
     this->ToolPanel.signal_Play    .connect(this, &CoreWindow::EventPlay);
     this->ToolPanel.signal_Pause   .connect(this, &CoreWindow::EventPause);
     this->ToolPanel.signal_Stop    .connect(this, &CoreWindow::EventStop);
+
+    this->SceneTreeWindow.signal_showEntityWindow.connect(this, &CoreWindow::EventShowEntityWindow);
+    this->SceneTreeWindow.signal_selectEntity.connect(this, &CoreWindow::EventSelectEntity);
+
+    this->AddEntityDialog.signal_CreateEntity.connect(this, &CoreWindow::EventAddEntity);
 }
 
 int CoreWindow::initGLFW()
@@ -161,9 +168,19 @@ void CoreWindow::imguiInit()
     std::string lv_font = "resources/Fonts/";
     lv_font += FONT_NAME;
     io.Fonts->AddFontFromFileTTF(lv_font.c_str(), 18.0f, NULL, io.Fonts->GetGlyphRangesCyrillic());
+
+    ImFontConfig config;
+    config.MergeMode = true;
+    config.GlyphMinAdvanceX = 18.0f; // Use if you want to make the icon monospaced
+    static const ImWchar icon_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
+    std::string lv_icon_font = "resources/Fonts/FA6_Free-Solid.otf";
+    io.Fonts->AddFontFromFileTTF(lv_icon_font.c_str(), 18.0f, &config, icon_ranges);
+
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(this->m_window, true);
     ImGui_ImplOpenGL3_Init("#version 460 core");
+
+    this->SceneTreeWindow.setSceneRoot(this->m_scene.getSceneRoot());
 }
 
 void CoreWindow::initOSG()
@@ -192,7 +209,7 @@ void CoreWindow::initOSG()
 
 void CoreWindow::loadScene()
 {
-    this->m_viewer.setSceneData(this->m_scene.getSceneRoot());
+    this->m_viewer.setSceneData(this->m_scene.getOSGRoot());
 }
 
 void CoreWindow::draw()
@@ -240,7 +257,7 @@ void CoreWindow::initGuiDockspace()
 
         ImGui::DockBuilderSplitNode(  dockspace_id,  ImGuiDir_Up,    0.05f,         &dock_id_up, &dock_id_center);
         ImGui::DockBuilderSplitNode(dock_id_center,  ImGuiDir_Left,  0.25f,       &dock_id_left, &dock_id_center);
-        ImGui::DockBuilderSplitNode(dock_id_center,  ImGuiDir_Right, 0.2f,     &dock_id_rightUp, &dock_id_center);
+        ImGui::DockBuilderSplitNode(dock_id_center,  ImGuiDir_Right, 0.3f,     &dock_id_rightUp, &dock_id_center);
         ImGui::DockBuilderSplitNode(dock_id_center,  ImGuiDir_Down,  0.2f,      &dock_id_bottom, &dock_id_center);
         ImGui::DockBuilderSplitNode(dock_id_rightUp, ImGuiDir_Down,  0.6f, &dock_id_rightBottom, &dock_id_rightUp);
 
@@ -310,7 +327,7 @@ void CoreWindow::posCallback(int p_x, int p_y)
 
 void CoreWindow::keyCallback(int p_key, int p_scancode, int p_action, int p_mods)
 {
-    if     (p_key == GLFW_KEY_LEFT_SHIFT && p_action == GLFW_PRESS)
+    if      (p_key == GLFW_KEY_LEFT_SHIFT && p_action == GLFW_PRESS)
     {
         this->shiftPressed = true;
     }
@@ -352,18 +369,26 @@ void CoreWindow::mouseButtonCallback(int p_button, int p_action, int p_mods)
     {
         this->middleMousePressed = false;
     }
+    else if (p_button == GLFW_MOUSE_BUTTON_LEFT   && p_action == GLFW_PRESS)
+    {
+        this->leftMousePressed = true;
+    }
+    else if (p_button == GLFW_MOUSE_BUTTON_LEFT   && p_action == GLFW_RELEASE)
+    {
+        this->leftMousePressed = false;
+    }
 }
 
 void CoreWindow::cursorPosCallback(double p_x, double p_y)
 {
     double dx = p_x - this->lastX;
     double dy = p_y - this->lastY;
-    double k1 = 0.0001;
+    double k1 = 0.001;
     double k2 = 0.0005;
     double l = this->m_manipulator->getDistance();
     if (this->rightMousePressed)
     {
-        this->m_manipulator->rotate(dx, dy, l * k1);
+        this->m_manipulator->rotate(dx, dy, k1 * l);
     }
     if (this->middleMousePressed)
     {
@@ -414,6 +439,56 @@ void CoreWindow::setCallbacks()
         static_cast<CoreWindow*>(glfwGetWindowUserPointer(p_window))->keyCallback(p_key, p_scancode, p_action, p_mods);
     };
     glfwSetKeyCallback(this->m_window, CoreWindowKeyCallback);
+}
+
+void CoreWindow::EventShowEntityWindow(entityType p_entityType)
+{
+    this->AddEntityDialog.setEntityType(p_entityType);
+    this->AddEntityDialog.show();
+}
+
+void CoreWindow::EventAddEntity(EntityInfo p_entityInfo)
+{
+    p_entityInfo.parent = this->m_scene.getSceneRoot();
+    this->m_scene.addEntity(p_entityInfo);
+    std::string lv_answer;
+    switch (p_entityInfo.entityType)
+    {
+    case ENTITY:
+        lv_answer = "Added entity - ";
+        break;
+    case DUMMY:
+        lv_answer = "Added dummy - ";
+        break;
+    case FOLDER:
+        lv_answer = "Added folder - ";
+        break;
+    case OBJECT:
+        lv_answer = "Added object - ";
+        break;
+    case CUBE:
+        lv_answer = "Added cube - ";
+        break;
+    case SPHERE:
+        lv_answer = "Added sphere - ";
+        break;
+    case CYLINDER:
+        lv_answer = "Added cylinder - ";
+        break;
+    case MULTIBODY:
+        lv_answer = "Added multibody - ";
+        break;   
+    default:
+        lv_answer = "Added entity - ";
+        break;
+    }
+    lv_answer += p_entityInfo.name;
+    this->signal_console('w', std::time(nullptr), lv_answer.c_str());
+}
+
+void CoreWindow::EventSelectEntity(Entity* p_entity)
+{
+    this->m_scene.selectEntity(p_entity);
 }
 
 void CoreWindow::EventNewFile()

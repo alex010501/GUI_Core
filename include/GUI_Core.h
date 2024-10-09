@@ -49,6 +49,7 @@
 #include <UI/UIWindow_PropertiesViewer.h>
 #include <UI/UIWindow_SceneTreeViewer.h>
 #include <UI/UIWindow_ToolPanel.h>
+#include <UI/UIWindow_AddEntityDialog.h>
 
 // 3D scene
 #include <3D/Scene.h>
@@ -112,6 +113,10 @@ private:
     sigslot::signal0<> signal_stop;
 
     // Events
+    void EventShowEntityWindow(entityType p_entityType);
+    void EventAddEntity(EntityInfo p_entityInfo);
+    void EventSelectEntity(Entity* p_entity);
+
     void EventNewFile();
     void EventOpenFile(std::string p_filePath);
     void EventSave();
@@ -139,6 +144,7 @@ protected:
     UIWindow_SceneTreeViewer  SceneTreeWindow;
     UIWindow_ToolPanel        ToolPanel;
     UIWindow_PlotingWorkspace PlotingWindow;
+    UIWindow_AddEntityDialog  AddEntityDialog;
 
     // OSG stuff
     osg::Vec4 m_clearColor = osg::Vec4(0.0f, 0.0f, 0.0f, 1.0f);

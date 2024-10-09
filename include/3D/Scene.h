@@ -17,11 +17,19 @@
 
 #include <btBulletDynamicsCommon.h>
 
-#include <3D/Objects/BaseObject.h>
+// #include <3D/Objects/BaseObject.h>
+#include <3D/Entity.h>
+#include <3D/Dummy.h>
+#include <3D/Folder.h>
+#include <3D/Object.h>
+#include <3D/MultiBody.h>
 
 class Scene
 {
 private:
+    // Scene name
+    std::string m_sceneName;
+
     // Bullet Physics
     btDiscreteDynamicsWorld* m_dynamicsWorld;
     btAxisSweep3* m_broadphase;
@@ -39,19 +47,26 @@ private:
     btRigidBody* m_groundbody;
     btRigidBody* createGround();
 
-    // Object List
-    std::vector<BaseObject> m_objectList;
+    // Entities system
+    SceneRoot m_sceneRoot;// Root of the scene
+    Entity* m_selectedEntity;  
     
 protected:
-    osg::ref_ptr<osg::Group> m_root;
+    osg::ref_ptr<osg::Group> m_OSGroot;
 
 public:
     Scene();
     ~Scene();
 
-    osg::ref_ptr<osg::Group> getSceneRoot(){return m_root.get();}
+    osg::ref_ptr<osg::Group> getOSGRoot(){return m_OSGroot.get();}
+
+    Entity* getSceneRoot(){return &m_sceneRoot;}
 
     void initPhysics();
 
     void update(double p_dt);
+
+    void addEntity(EntityInfo p_info);
+
+    void selectEntity(Entity* p_entity) { m_selectedEntity = p_entity; std::cout << "Selected entity: " << p_entity->getName() << std::endl; }
 };

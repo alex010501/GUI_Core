@@ -10,4 +10,6 @@ if NOT EXIST vcpkg (
     call .\vcpkg\vcpkg.exe integrate install
 )
 
-call .\vcpkg\vcpkg.exe install osg glfw3 bullet3 assimp tinyfiledialogs iniparser --clean-after-build
+call .\vcpkg\vcpkg.exe install osg  --clean-after-build
+
+call .\vcpkg\vcpkg.exe install glfw3 bullet3 assimp tinyfiledialogs iniparser --clean-after-build

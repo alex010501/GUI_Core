@@ -34,7 +34,7 @@ public:
     std::string m_label;
     std::vector<double> m_data;
     
-    Graph(std::string  p_label, double* p_current_value): m_label(p_label), m_current_value(p_current_value){}
+    Graph(std::string  p_label, double* p_current_value): m_current_value(p_current_value), m_label(p_label){}
 
     void update();
 
