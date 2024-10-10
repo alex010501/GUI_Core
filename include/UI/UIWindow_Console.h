@@ -27,5 +27,6 @@ public:
     // Add class methods here
     UIWindow_Console(const char* p_title);
     void draw();
+    void init();
     void consoleCallback(char p_color, std::time_t p_time, const char* p_message);
 };

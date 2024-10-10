@@ -38,6 +38,7 @@ public:
     // Add class methods here
     UIWindow_PropertiesViewer(const char* p_title);
     void draw();
+    void init();
 
     void setSelectedEntity(Entity* p_entity) {m_selectedEntity = p_entity;}
 

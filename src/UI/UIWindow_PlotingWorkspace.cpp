@@ -5,6 +5,11 @@ UIWindow_PlotingWorkspace::UIWindow_PlotingWorkspace(const char* p_title): UIWin
 
 }
 
+void UIWindow_PlotingWorkspace::init()
+{
+    
+}
+
 void UIWindow_PlotingWorkspace::draw()
 {
     ImGui::Begin(m_title);

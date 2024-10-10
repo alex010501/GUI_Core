@@ -7,6 +7,11 @@ UIWindow_Console::UIWindow_Console(const char* p_title): UIWindow(p_title)
     this->m_commandBuffer[0] = '\0';
 }
 
+void UIWindow_Console::init()
+{
+    
+}
+
 void UIWindow_Console::draw()
 {
     ImGui::Begin(m_title);

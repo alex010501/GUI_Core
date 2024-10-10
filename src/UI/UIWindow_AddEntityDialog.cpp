@@ -7,6 +7,11 @@ UIWindow_AddEntityDialog::UIWindow_AddEntityDialog(const char* p_title): UIWindo
     this->resetValues();
 }
 
+void UIWindow_AddEntityDialog::init()
+{
+    
+}
+
 void UIWindow_AddEntityDialog::resetValues()
 {
     // Set initial values

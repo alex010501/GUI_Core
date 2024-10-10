@@ -36,4 +36,5 @@ public:
     void setEntityType(entityType p_entityType){m_entityType = p_entityType;}
 
     void draw();
+    void init();
 };

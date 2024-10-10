@@ -22,4 +22,5 @@ public:
     UIWindow_PlotingWorkspace(const char* p_title);
 
     void draw();
+    void init();
 };

@@ -12,4 +12,5 @@ public:
     // Add class methods here
     UIWindow_LibraryViewer(const char* p_title);
     void draw();
+    void init();
 };

@@ -53,6 +53,11 @@ UIWindow(p_title)
 
 }
 
+void UIWindow_SceneTreeViewer::init()
+{
+    
+}
+
 void UIWindow_SceneTreeViewer::draw()
 {
     ImGui::Begin(m_title);

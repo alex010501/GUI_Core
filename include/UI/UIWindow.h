@@ -27,4 +27,5 @@ public:
     {}
 
     virtual void draw(){}
+    virtual void init(){}
 };

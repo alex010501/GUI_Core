@@ -32,7 +32,8 @@ public:
 
     // Add class methods here
     UIWindow_SceneTreeViewer(const char* p_title);
-    void draw();
+    void draw();    
+    void init();
 
     void setSceneRoot(Entity* p_sceneRoot) { m_sceneTreeRoot = new SceneTreeObject(p_sceneRoot, this); }
     void selectEntity(Entity* p_entity);

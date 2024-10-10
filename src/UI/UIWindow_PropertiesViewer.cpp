@@ -5,6 +5,11 @@ UIWindow_PropertiesViewer::UIWindow_PropertiesViewer(const char* p_title): UIWin
 
 }
 
+void UIWindow_PropertiesViewer::init()
+{
+    
+}
+
 void UIWindow_PropertiesViewer::draw()
 {
     ImGui::Begin(m_title);

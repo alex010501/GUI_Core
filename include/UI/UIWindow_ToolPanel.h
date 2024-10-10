@@ -27,12 +27,10 @@ private:
     UIHelper::ImageData SpeedIcon;
     UIHelper::ImageData CalculateIcon;
     UIHelper::ImageData StopIcon;
-    UIHelper::ImageData PlayIcon;
-    UIHelper::ImageData PauseIcon;
+    UIHelper::ImageData Play_PauseIcon;
 
     // Private methods
     void loadIcons();
-    void freeIcons();
     void fileButtons();
     void editButtons();
     void frequency_durationInput();
@@ -58,6 +56,6 @@ public:
 
     // Add class methods here
     UIWindow_ToolPanel(const char* p_title);
-    ~UIWindow_ToolPanel();
     void draw();
+    void init();
 };

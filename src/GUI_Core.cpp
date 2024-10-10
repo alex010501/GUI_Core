@@ -45,14 +45,14 @@ int CoreWindow::run(const char* scenePath)
     // Set up GLFW callbacks
     this->setCallbacks();
 
-    // Setup Dear ImGui context
-    this->imguiInit();
-
     // Set up OSG
     this->initOSG();
     
     // Load scene
-    this->loadScene();
+    this->loadScene();    
+
+    // Setup Dear ImGui context
+    this->imguiInit();
 
     // Create simulation thread
     auto updateMethod = std::bind(&CoreWindow::update, this);
@@ -180,6 +180,11 @@ void CoreWindow::imguiInit()
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(this->m_window, true);
     ImGui_ImplOpenGL3_Init("#version 460 core");
+
+    for (auto window : this->m_GUIWindows)
+    {
+        window->init();
+    }
 
     this->SceneTreeWindow.setSceneRoot(this->m_scene.getSceneRoot());
 }
