@@ -1,6 +1,48 @@
 #include <UI/UIHelper.h>
 
-bool UIHelper::LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height)
+bool UIHelper::loadImageFromFile(const char* p_filename, UIHelper::ImageData* p_out_imageMemory)
+{
+    int lv_image_width = 0;
+    int lv_image_height = 0;
+    unsigned char* lv_image_data = stbi_load(p_filename, &lv_image_width, &lv_image_height, NULL, 4);
+    if (lv_image_data == NULL)
+        return false;
+    p_out_imageMemory->image_data = lv_image_data;
+    p_out_imageMemory->width = lv_image_width;
+    p_out_imageMemory->height = lv_image_height;
+    return true;
+}
+UIHelper::TextureData UIHelper::renderTexture(UIHelper::ImageData p_imageData)
+{
+    GLuint lv_image_texture;
+    glGenTextures(1, &lv_image_texture);
+    glBindTexture(GL_TEXTURE_2D, lv_image_texture);
+
+    // Setup filtering parameters for display
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
+    
+    // Upload pixels into texture
+#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, p_imageData.width, p_imageData.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, p_imageData.image_data);
+    
+    UIHelper::TextureData lv_textureData;
+
+    lv_textureData.texture = (void*)(intptr_t)lv_image_texture;
+    lv_textureData.width = p_imageData.width;
+    lv_textureData.height = p_imageData.height;
+    return lv_textureData;
+}
+void UIHelper::freeImage(UIHelper::ImageData imageData)
+{
+    stbi_image_free(imageData.image_data);
+}
+
+/*bool UIHelper::LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height)
 {
     // Load from file
     int image_width = 0;
@@ -48,85 +90,17 @@ UIHelper::ImageData UIHelper::LoadImg(const char* filename)
     imageData.height = my_image_height;
 
     return imageData;
-}
+}*/
 
-bool UIHelper::ImGui_imageButton(UIHelper::ImageData imageData, bool enabled, std::string buttonName)
+bool UIHelper::ImGui_imageButton(UIHelper::TextureData p_imageData, bool p_enabled, std::string p_buttonName)
 {   
-    ImGui::BeginDisabled(!enabled);
-    bool ret = ImGui::IsItemClicked(ImGui::ImageButton(buttonName.c_str(), imageData.texture, ImVec2(imageData.width, imageData.height)));
+    ImGui::BeginDisabled(!p_enabled);
+    bool ret = ImGui::IsItemClicked(ImGui::ImageButton(p_buttonName.c_str(), p_imageData.texture, ImVec2(p_imageData.width, p_imageData.height)));
     ImGui::EndDisabled();
     return ret;
 }
 
-void UIHelper::ImGui_picture(UIHelper::ImageData imageData)
+void UIHelper::ImGui_picture(UIHelper::TextureData p_imageData)
 {
-    ImGui::Image(imageData.texture, ImVec2(imageData.width, imageData.height));
+    ImGui::Image(p_imageData.texture, ImVec2(p_imageData.width, p_imageData.height));
 }
-
-std::string UIHelper::labelPrefix(const char* p_label)
-{
-    // ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 2);
-	ImGui::Text(p_label); 
-	ImGui::SameLine();
-    // ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 2);
-
-	std::string labelID = "##";
-	labelID += p_label;
-
-	return labelID;
-}
-
-/*bool UIHelper::BeginButtonDropDown(const char *label, ImVec2 buttonSize)
-{
-    ImGui::SameLine(0.f, 0.f);
-
-    ImGui::ImGuiWindow* window = ImGui::GetCurrentWindow();
-    ImGuiState &g = *GImGui;
-    const ImGuiStyle &style = g.Style;
-
-    float x = ImGui::GetCursorPosX();
-    float y = ImGui::GetCursorPosY();
-
-    ImVec2 size(20, buttonSize.y);
-    bool pressed = ImGui::Button("##", size);
-
-    // Arrow
-    ImVec2 center(window->Pos.x + x + 10, window->Pos.y + y + buttonSize.y / 2);
-    float r = 8.f;
-    center.y -= r * 0.25f;
-    ImVec2 a = center + ImVec2(0, 1) * r;
-    ImVec2 b = center + ImVec2(-0.866f, -0.5f) * r;
-    ImVec2 c = center + ImVec2(0.866f, -0.5f) * r;
-
-    window->DrawList->AddTriangleFilled(a, b, c, GetColorU32(ImGuiCol_Text));
-
-    // Popup
-
-    ImVec2 popupPos;
-
-    popupPos.x = window->Pos.x + x - buttonSize.x;
-    popupPos.y = window->Pos.y + y + buttonSize.y;
-
-    ImGui::SetNextWindowPos(popupPos);
-
-    if (pressed)
-    {
-        ImGui::OpenPopup(label);
-    }
-
-    if (ImGui::BeginPopup(label))
-    {
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, style.Colors[ImGuiCol_Button]);
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, style.Colors[ImGuiCol_Button]);
-        ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, style.Colors[ImGuiCol_Button]);
-        return true;
-    }
-
-    return false;
-}
-
-void UIHelper::EndButtonDropDown()
-{
-    ImGui::PopStyleColor(3);
-    ImGui::EndPopup();
-}*/

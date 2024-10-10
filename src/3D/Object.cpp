@@ -2,7 +2,8 @@
 
 Object::Object(const char* p_name, osg::Matrix p_worldTransform, Entity* p_parent, const char* p_modelPath):
 Entity(p_name, p_worldTransform, p_parent)
-{
+{    
+    this->m_mesh = new osg::Geode;
     this->m_localTransform->addChild(m_mesh.get());
     this->m_isMeshLoaded = false;
     this->m_isPhysicsEnabled = false;
@@ -15,7 +16,6 @@ Entity(p_name, p_worldTransform, p_parent)
     this->m_inertia = btVector3(0, 0, 0);
     this->m_mass = 0.0;
 
-    this->m_mesh = new osg::Geode;
     if (p_modelPath != nullptr)
     {
         this->setMesh(p_modelPath);
@@ -112,9 +112,9 @@ void Object::setRigidBody()
 
 void Object::setMesh(const char* p_modelPath)
 {
-    osgDB::Registry::instance()->loadLibrary("osgdb_osg");
-    osgDB::Registry::instance()->loadLibrary("osgdb_obj");
-    osgDB::Registry::instance()->loadLibrary("osgdb_stl");
+    // osgDB::Registry::instance()->loadLibrary("osgdb_osg");
+    // osgDB::Registry::instance()->loadLibrary("osgdb_obj");
+    // osgDB::Registry::instance()->loadLibrary("osgdb_stl");
     osg::ref_ptr<osg::Node> lv_node = osgDB::readNodeFile(p_modelPath);
     if (lv_node)
     {

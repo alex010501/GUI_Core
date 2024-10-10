@@ -1,8 +1,8 @@
 #include <UI/UIWindow_SceneTreeViewer.h>
 
-SceneTreeObject::SceneTreeObject(Entity* p_entity, UIWindow* p_parent) :
-m_entity(p_entity),
-m_parent(p_parent)
+SceneTreeObject::SceneTreeObject(Entity* p_entity, UIWindow* p_parent):
+m_parent(p_parent),
+m_entity(p_entity)
 {
     this->m_iconName = p_entity->getIcon();
     this->m_iconName += " ";
@@ -60,7 +60,7 @@ void UIWindow_SceneTreeViewer::draw()
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(0, 255, 127, 255));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(0, 255, 0, 255));
     ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(0, 127, 0, 255));
-    if(ImGui::Button(ICON_FA_CIRCLE_PLUS " Add object"))
+    if(ImGui::Button(ICON_FA_CIRCLE_PLUS " Add entity"))
     {
         ImGui::OpenPopup("AddEntityPopup");
     }

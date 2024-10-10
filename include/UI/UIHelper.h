@@ -17,25 +17,31 @@
 
 namespace UIHelper
 {
-
     struct ImageData
+    {
+        unsigned char* image_data;
+        int width;
+        int height;
+    };
+
+    struct TextureData
     {
         ImTextureID texture;
         int width;
         int height;
     };
+
+    bool loadImageFromFile(const char* p_filename, ImageData* p_out_imageMemory);
+
+    TextureData renderTexture(ImageData p_imageData);
     
-    bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height);
+    void freeImage(ImageData p_imageData);
+    
+    // bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height);
 
-    ImageData LoadImg(const char* filename);
+    // ImageData LoadImg(const char* filename);
 
-    bool ImGui_imageButton(ImageData imageData, bool enabled, std::string buttonName);
+    bool ImGui_imageButton(TextureData p_imageData, bool p_enabled, std::string p_buttonName);
 
-    void ImGui_picture(ImageData imageData);
-
-    std::string labelPrefix(const char* const label);
-
-    // bool BeginButtonDropDown(const char* label, ImVec2 buttonSize);
-
-    // void EndButtonDropDown();
+    void ImGui_picture(TextureData p_imageData);
 };

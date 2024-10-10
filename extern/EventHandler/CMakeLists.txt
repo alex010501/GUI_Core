@@ -12,4 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/)
 
 # Add library
-add_library(EventHandler include/sigslot.h src/sigslot.cpp)
+add_library(EventHandler STATIC include/sigslot.h src/sigslot.cpp)
+
+target_compile_options(EventHandler PUBLIC $<$<CONFIG:Debug>:/MTd>)
+target_compile_options(EventHandler PUBLIC $<$<CONFIG:Release>:/MT>)

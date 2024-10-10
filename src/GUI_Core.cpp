@@ -85,6 +85,7 @@ void CoreWindow::initSignals()
 {
     // Connect from main window to all GUI windows
     this->signal_console.connect(&(this->ConsoleWindow),   &UIWindow_Console::consoleCallback);
+    this->signal_selectEntityProperties.connect(&(this->PropertiesWindow), &UIWindow_PropertiesViewer::setSelectedEntity);
 
     // Connect from tool panel to main window
     this->ToolPanel.signal_NewFile .connect(this, &CoreWindow::EventNewFile);
@@ -489,6 +490,7 @@ void CoreWindow::EventAddEntity(EntityInfo p_entityInfo)
 void CoreWindow::EventSelectEntity(Entity* p_entity)
 {
     this->m_scene.selectEntity(p_entity);
+    this->signal_selectEntityProperties(p_entity);
 }
 
 void CoreWindow::EventNewFile()

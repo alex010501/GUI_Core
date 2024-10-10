@@ -111,6 +111,7 @@ private:
     sigslot::signal3<char, std::time_t, const char*> signal_console;
     sigslot::signal2<double, double> signal_play;
     sigslot::signal0<> signal_stop;
+    sigslot::signal1<Entity*> signal_selectEntityProperties;
 
     // Events
     void EventShowEntityWindow(entityType p_entityType);

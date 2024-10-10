@@ -40,10 +40,10 @@ Scene::Scene()
 	this->m_OSGroot->addChild(this->m_sceneRoot.getLocalTransform());
 	this->m_selectedEntity = &(this->m_sceneRoot);
 
-	// osg::ref_ptr<osg::ShapeDrawable> sphere = new osg::ShapeDrawable(new osg::Sphere(osg::Vec3(2, 2, 5), 0.5));
-	// sphere->setColor(osg::Vec4(0.5, 1.0, 0.5, 1.0));
+// 	osg::ref_ptr<osg::ShapeDrawable> sphere = new osg::ShapeDrawable(new osg::Sphere(osg::Vec3(2, 2, 5), 0.5));
+// 	sphere->setColor(osg::Vec4(0.5, 1.0, 0.5, 1.0));
 
-	// this->m_OSGroot->addChild(sphere);
+// 	this->m_OSGroot->addChild(sphere);
 }
 
 Scene::~Scene()
@@ -177,12 +177,10 @@ void Scene::addEntity(EntityInfo p_info)
 
 	if (this->m_selectedEntity->getEntityType() == entityType::FOLDER)
 	{
-		std::cout << "Added entity into folder: " << p_info.name << std::endl;
 		static_cast<Folder*>(this->m_selectedEntity)->addChild(lv_entity);
 	}
 	else
 	{
-		std::cout << "Added entity into scene root: " << p_info.name << std::endl;
 		this->m_sceneRoot.addChild(lv_entity);
 	}
 }

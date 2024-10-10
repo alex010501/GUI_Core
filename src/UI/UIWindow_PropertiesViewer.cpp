@@ -9,16 +9,16 @@ void UIWindow_PropertiesViewer::draw()
 {
     ImGui::Begin(m_title);
 
-    // if (this->m_selectedEntity == nullptr)
-    // {
-    //     ImGui::End();
-    //     return;
-    // }
+    if (this->m_selectedEntity == nullptr || m_selectedEntity->getParent() == nullptr)
+    {
+        ImGui::End();
+        return;
+    }
         
     if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        ImGui::Text("Object: %s", "name");//this->m_selectedEntity->getName());
-        ImGui::Text("Parent: %s", "name");//this->m_selectedEntity->getParent()->getName());
+        ImGui::Text("Object: %s", this->m_selectedEntity->getName());
+        ImGui::Text("Parent: %s", this->m_selectedEntity->getParent()->getName());
         ImGui::SameLine();
         ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX(), ImGui::GetCursorPosY() - 2));
         if (ImGui::Button("Change"))
@@ -34,20 +34,36 @@ void UIWindow_PropertiesViewer::draw()
         if (ImGui::RadioButton("Local", this->m_transformLocal))
             this->m_transformLocal = true;
 
+        if (this->m_transformLocal)
+        {
+            this->getTranslationAndRotation(this->m_selectedEntity->getLocalTransform()->getMatrix());
+        }
+        else
+        {
+            this->getTranslationAndRotation(this->m_selectedEntity->getWorldTransform()->getMatrix());
+        }
+
+
         this->drawTransformInputs(this->m_translation, this->m_rotation);
+
+        if (this->m_isMoved)
+        {
+            moveOption lv_moveOption = this->m_transformLocal ? moveOption::LOCAL_ABS : moveOption::WORLD_ABS;
+            this->m_selectedEntity->move(lv_moveOption, this->getMatrix());
+        }
     }
 
-    if (ImGui::CollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("Mesh"))//, ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::Text("Mesh");
     }
 
-    if (ImGui::CollapsingHeader("Graphics", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("Graphics"))//, ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::Text("Graphics");
     }
 
-    if (ImGui::CollapsingHeader("Physics", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("Physics"))//, ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::Text("Physics");
     }
@@ -57,6 +73,8 @@ void UIWindow_PropertiesViewer::draw()
 
 void UIWindow_PropertiesViewer::drawTransformInputs(double *p_translation, double *p_rotation)
 {
+    bool lv_xMove, lv_yMove, lv_zMove, lv_aMove, lv_bMove, lv_cMove;
+
     float lv_textInputWidth = (ImGui::GetWindowWidth() - 110 - ImGui::CalcTextSize("POS:").x) / 3;
 
     // Position
@@ -79,6 +97,7 @@ void UIWindow_PropertiesViewer::drawTransformInputs(double *p_translation, doubl
     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
     ImGui::PushItemWidth(lv_textInputWidth);
     ImGui::InputDouble("##X", p_translation, 0.0, 0.0, "%.3f");
+    lv_xMove = ImGui::IsItemEdited();
     ImGui::PopItemWidth();
     ImGui::PopStyleColor(2);
 
@@ -98,7 +117,8 @@ void UIWindow_PropertiesViewer::drawTransformInputs(double *p_translation, doubl
     ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(255, 255, 255, 255));
     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
     ImGui::PushItemWidth(lv_textInputWidth);
-    ImGui::InputDouble("##Y", p_translation + 1, 0.0, 0.0, "%.3f");
+    this->m_isMoved = ImGui::InputDouble("##Y", p_translation + 1, 0.0, 0.0, "%.3f");
+    lv_yMove = ImGui::IsItemEdited();
     ImGui::PopItemWidth();
     ImGui::PopStyleColor(2);
 
@@ -118,7 +138,8 @@ void UIWindow_PropertiesViewer::drawTransformInputs(double *p_translation, doubl
     ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(255, 255, 255, 255));
     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
     ImGui::PushItemWidth(lv_textInputWidth);
-    ImGui::InputDouble("##Z", p_translation + 2, 0.0, 0.0, "%.3f");
+    this->m_isMoved = ImGui::InputDouble("##Z", p_translation + 2, 0.0, 0.0, "%.3f");
+    lv_zMove = ImGui::IsItemEdited();
     ImGui::PopItemWidth();
     ImGui::PopStyleColor(2);
     
@@ -141,7 +162,8 @@ void UIWindow_PropertiesViewer::drawTransformInputs(double *p_translation, doubl
     ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(255, 255, 255, 255));
     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
     ImGui::PushItemWidth(lv_textInputWidth);
-    ImGui::InputDouble("##A", p_rotation, 0.0, 0.0, "%.3f");
+    this->m_isMoved = ImGui::InputDouble("##A", p_rotation, 0.0, 0.0, "%.3f");
+    lv_aMove = ImGui::IsItemEdited();
     ImGui::PopItemWidth();
     ImGui::PopStyleColor(2);
 
@@ -161,7 +183,8 @@ void UIWindow_PropertiesViewer::drawTransformInputs(double *p_translation, doubl
     ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(255, 255, 255, 255));
     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
     ImGui::PushItemWidth(lv_textInputWidth);
-    ImGui::InputDouble("##B", p_rotation + 1, 0.0, 0.0, "%.3f");
+    this->m_isMoved = ImGui::InputDouble("##B", p_rotation + 1, 0.0, 0.0, "%.3f");
+    lv_bMove = ImGui::IsItemEdited();
     ImGui::PopItemWidth();
     ImGui::PopStyleColor(2);
 
@@ -182,8 +205,11 @@ void UIWindow_PropertiesViewer::drawTransformInputs(double *p_translation, doubl
     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
     ImGui::PushItemWidth(lv_textInputWidth);
     ImGui::InputDouble("##C", p_rotation + 2, 0.0, 0.0, "%.3f");
+    lv_cMove = ImGui::IsItemEdited();
     ImGui::PopItemWidth();
     ImGui::PopStyleColor(2);
+
+    this->m_isMoved = lv_xMove || lv_yMove || lv_zMove || lv_aMove || lv_bMove || lv_cMove;
 }
 
 void UIWindow_PropertiesViewer::getTransform()

@@ -3,5 +3,7 @@
  
 #define RESOURCES_PATH "@RESOURCES_PATH@"
 #define FONT_NAME "@FONT_NAME@"
+
+#define B_@CMAKE_BUILD_STRING@ 0
  
 #endif // CONFIG_H_IN

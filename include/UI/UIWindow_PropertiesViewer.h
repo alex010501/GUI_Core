@@ -39,6 +39,6 @@ public:
     UIWindow_PropertiesViewer(const char* p_title);
     void draw();
 
-    void setSelectedEntity(Entity* p_entity);
+    void setSelectedEntity(Entity* p_entity) {m_selectedEntity = p_entity;}
 
 };

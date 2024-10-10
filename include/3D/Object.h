@@ -1,5 +1,7 @@
 #pragma once
 
+#include <config.h>
+
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -8,8 +10,16 @@
 #include <osg/ShapeDrawable>
 #include <osg/Texture2D>
 #include <osgDB/ReadFile>
-// USE_OSGPLUGIN(obj)
-// USE_OSGPLUGIN(stl)
+
+#ifdef B_DEBUG
+
+#endif
+
+#ifdef B_RELEASE
+USE_OSGPLUGIN(osg)
+USE_OSGPLUGIN(obj)
+USE_OSGPLUGIN(stl)
+#endif
 
 #include <3D/Entity.h>
 

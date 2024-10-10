@@ -28,9 +28,12 @@ add_library(imguiInclude STATIC ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imconfig.h
                                 ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_opengl3.h
                                 ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_opengl3.cpp)
 
-target_link_libraries(imguiInclude PRIVATE glfw)
-target_link_libraries(imguiInclude PRIVATE OpenGL::GL)
-target_include_directories(imguiInclude PRIVATE ${Stb_INCLUDE_DIR})
+target_compile_options(imguiInclude PUBLIC $<$<CONFIG:Debug>:/MTd>)
+target_compile_options(imguiInclude PUBLIC $<$<CONFIG:Release>:/MT>)
+
+target_link_libraries(imguiInclude PUBLIC glfw)
+target_link_libraries(imguiInclude PUBLIC OpenGL::GL)
+target_include_directories(imguiInclude PUBLIC ${Stb_INCLUDE_DIR})
 
 target_include_directories(imguiInclude PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/imgui
                                                ${CMAKE_CURRENT_SOURCE_DIR}/implot)
